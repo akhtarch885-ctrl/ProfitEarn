@@ -1,1 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfitEarn - Account Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071827;color:#fff;font-family:Arial,sans-serif}
+header{background:#102b43;padding:20px;text-align:center;border-bottom:1px solid #29465d}
+.logo{font-size:29px;font-weight:bold;color:#38dfa0}
+header p{color:#c4d5e2;margin:7px}
+.container{max-width:480px;margin:35px auto;padding:15px}
+.card{background:#102b43;border:1px solid #294b65;border-radius:17px;padding:25px;box-shadow:0 10px 30px #0004}
+h2{text-align:center;margin-top:0}
+.subtitle{text-align:center;color:#b6c9d8;line-height:1.5}
+input{width:100%;padding:15px;margin:9px 0;border-radius:9px;border:1px solid #456079;background:#071d30;color:white;font-size:15px}
+button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:9px;background:#31d99a;color:#062c20;font-size:16px;font-weight:bold;cursor:pointer}
+button.alt{background:#294b65;color:white}
+button.link{background:transparent;color:#55e6b1;font-size:14px}
+#message{font-size:14px;overflow-wrap:anywhere;text-align:center;color:#72e7b8;line-height:1.5}
+.hidden{display:none}
+.dashboard{max-width:750px;margin:30px auto;padding:15px}
+.panel{background:#102b43;border:1px solid #294b65;border-radius:15px;padding:22px;margin-bottom:15px}
+.menu{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0}
+.menu button{width:auto;padding:11px 18px}
+footer{text-align:center;color:#9bb0c1;padding:25px;font-size:12px;line-height:1.7}
+.small{font-size:12px;color:#a9bdcd;line-height:1.6}
+</style>
+</head>
+<body>
 
+<header>
+ <div class="logo">ProfitEarn</div>
+ <p>Your Account Portal</p>
+</header>
+
+<main class="container" id="authPage">
+ <div class="card">
+  <h2 id="formTitle">Create Your Account</h2>
+  <p class="subtitle" id="formSubtitle">Register to access your account.</p>
+
+  <input id="email" type="email" placeholder="Email Address" autocomplete="email">
+  <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
+  <button id="mainButton" onclick="register()">Create Account</button>
+  <button class="alt" id="loginButton" onclick="login()">Login</button>
+  <button class="link" onclick="resetPassword()">Forgot Password?</button>
+  <p id="message" aria-live="polite"></p>
+  <p class="small">By creating an account, you agree to use this portal lawfully. Financial services are not offered through this page.</p>
+ </div>
+</main>
+
+<section class="dashboard hidden" id="dashboardPage">
+ <div class="panel">
+  <h2>Welcome to ProfitEarn</h2>
+  <p class="subtitle">You are logged in successfully.</p>
+  <p id="userEmail" style="text-align:center;color:#42e5a8"></p>
+  <button onclick="logout()">Logout</button>
+ </div>
+
+ <div class="panel">
+  <h2>My Dashboard</h2>
+  <p class="subtitle">Your account portal is ready.</p>
+  <div class="menu">
+   <button onclick="showInfo('Profile')">My Profile</button>
+   <button onclick="showInfo('Plans')">Plans</button>
+   <button onclick="showInfo('History')">History</button>
+   <button onclick="showInfo('Support')">Support</button>
+  </div>
+  <p id="sectionMessage" class="subtitle">Choose a section above.</p>
+ </div>
+
+ <div class="panel">
+  <h3>Account Information</h3>
+  <p class="small">Your account is connected to Supabase authentication. Financial balances and transactions will only be shown after secure, verified backend functionality is implemented.</p>
+ </div>
+</section>
+
+<footer>
+ ProfitEarn © 2026. All rights reserved.
+ <br>
+ This portal does not accept deposits or promise investment returns.
+ Any future financial service is subject to applicable legal approvals.
+</footer>
+
+<script>
+const SUPABASE_URL = "https://rpjdldvelsenbvhejpsr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_QjF7vEBRSnE3mMPwdPXmyg_ifJGAaBw";
+
+const client = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const authPage=document.getElementById("authPage");
+const dashboardPage=document.getElementById("dashboardPage");
+const message=document.getElementById("message");
+
+function showDashboard(user){
+ authPage.classList.add("hidden");
+ dashboardPage.classList.remove("hidden");
+ document.getElementById("userEmail").textContent=user.email || "";
+}
+
+function showLogin(){
+ dashboardPage.classList.add("hidden");
+ authPage.classList.remove("hidden");
+}
+
+async function register(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || password.length<6){
+  message.textContent="Enter a valid email and a password with at least 6 characters.";
+  return;
+ }
+
+ message.textContent="Please wait...";
+ const {data,error}=await client.auth.signUp({email,password});
+
+ if(error){
+  message.textContent=error.message;
+  return;
+ }
+
+ message.textContent="Registration submitted. Please check your email for verification.";
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+
+ if(!email || !password){
+  message.textContent="Please enter your email and password.";
+  return;
+ }
+
+ message.textContent="Logging in...";
+ const {data,error}=await client.auth.signInWithPassword({email,password});
+
+ if(error){
+  message.textContent=error.message;
+  return;
+ }
+
+ showDashboard(data.user);
+}
+
+async function resetPassword(){
+ const email=document.getElementById("email").value.trim();
+
+ if(!email){
+  message.textContent="Enter your email address first.";
+  return;
+ }
+
+ message.textContent="Sending password reset email...";
+ const {error}=await client.auth.resetPasswordForEmail(email);
+
+ message.textContent=error
+  ? error.message
+  : "If the account exists, a password reset email will be sent.";
+}
+
+async function logout(){
+ await client.auth.signOut();
+ showLogin();
+ message.textContent="You have logged out.";
+}
+
+function showInfo(section){
+ document.getElementById("sectionMessage").textContent=
+ section+" section is being prepared. It is not active yet.";
+}
+
+client.auth.onAuthStateChange((event,session)=>{
+ if(session && session.user){
+  showDashboard(session.user);
+ }else{
+  showLogin();
+ }
+});
+
+async function checkSession(){
+ const {data,error}=await client.auth.getSession();
+ if(!error && data.session){
+  showDashboard(data.session.user);
+ }
+}
+checkSession();
+</script>
+</body>
+  </html>
+  
